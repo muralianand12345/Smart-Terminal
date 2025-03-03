@@ -1,0 +1,7 @@
+FROM jupyter/scipy-notebook:latest
+
+# Set environment variables
+ENV JUPYTER_ENABLE_LAB=yes
+
+# Set the command to start the notebook
+CMD ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
