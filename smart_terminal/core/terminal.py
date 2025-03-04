@@ -107,7 +107,7 @@ class SmartTerminal(TerminalInterface):
             self.ai_client = AIClient(
                 api_key=config.get("api_key", ""),
                 base_url=config.get("base_url", "https://api.groq.com/openai/v1"),
-                model_name=config.get("model_name", "llama-3.1-70b-versatile"),
+                model_name=config.get("model_name", "llama-3.3-70b-versatile"),
                 temperature=config.get("temperature", 0.0),
             )
 
@@ -415,7 +415,7 @@ class SmartTerminal(TerminalInterface):
 
             # Get model name
             model_name = input(
-                f"Enter model name [{config.get('model_name', 'llama-3.1-70b-versatile')}]: "
+                f"Enter model name [{config.get('model_name', 'llama-3.3-70b-versatile')}]: "
             )
             if model_name:
                 config["model_name"] = model_name

@@ -7,7 +7,7 @@ and the AI, including system messages and tool calls.
 
 from abc import ABC
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 
 
 class Message(BaseModel, ABC):
@@ -34,7 +34,9 @@ class UserMessage(Message):
     need to be processed by the AI.
     """
 
-    role: str = Field(default="user", const=True)
+    role: Literal["user"] = Field(
+        default="user", description="The role of the message sender"
+    )
 
     @classmethod
     def create(cls, content: str) -> "UserMessage":
@@ -58,7 +60,9 @@ class SystemMessage(Message):
     behave or process the user's requests.
     """
 
-    role: str = Field(default="system", const=True)
+    role: Literal["system"] = Field(
+        default="system", description="The role of the message sender"
+    )
 
     @classmethod
     def create(cls, content: str) -> "SystemMessage":
@@ -90,7 +94,9 @@ class AIMessage(Message):
     natural language text, tool calls, or both.
     """
 
-    role: str = Field(default="assistant", const=True)
+    role: Literal["assistant"] = Field(
+        default="assistant", description="The role of the message sender"
+    )
     content: Optional[str] = Field(
         default=None, description="The content of the message"
     )

@@ -7,8 +7,8 @@ and other contextual data that helps in command generation.
 """
 
 from datetime import datetime
-from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
+from pydantic import BaseModel, Field
 
 
 class FileInfo(BaseModel):

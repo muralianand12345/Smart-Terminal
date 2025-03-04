@@ -5,9 +5,10 @@ This module handles command-line argument parsing for the application,
 defining available commands and options.
 """
 
-import argparse
 import logging
-from typing import Optional, Namespace
+import argparse
+from typing import Optional, List
+from argparse import Namespace
 
 from smart_terminal import __version__
 
@@ -15,7 +16,7 @@ from smart_terminal import __version__
 logger = logging.getLogger(__name__)
 
 
-def parse_arguments(args: Optional[list] = None) -> Namespace:
+def parse_arguments(args: Optional[List[str]] = None) -> Namespace:
     """
     Parse command-line arguments.
 

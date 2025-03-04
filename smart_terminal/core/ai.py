@@ -60,7 +60,7 @@ class AIClient(AIProvider):
         """
         self.api_key = api_key
         self.base_url = base_url or "https://api.groq.com/openai/v1"
-        self.model_name = model_name or "llama-3.1-70b-versatile"
+        self.model_name = model_name or "llama-3.3-70b-versatile"
         self.temperature = temperature
 
         # Try to initialize AI adapter
@@ -218,13 +218,19 @@ Important rules:
         Raises:
             AIError: If command generation fails
         """
+        # Initialize context if None to avoid NoneType errors
+        if context is None:
+            context = {}
+
         if self._using_adapter:
             try:
                 # Use the adapter implementation
                 messages = [{"role": "user", "content": prompt}]
 
-                if context and "history" in context:
-                    messages = context["history"] + messages
+                # Make sure context and history exist before trying to use them
+                history = context.get("history", [])
+                if history:
+                    messages = history + messages
 
                 if not system_prompt:
                     system_prompt = self.get_system_prompt(context)
@@ -291,9 +297,11 @@ Important rules:
                     {"role": "user", "content": prompt},
                 ]
 
-                # Add history if available
-                if context and "history" in context:
-                    messages = [messages[0]] + context["history"] + [messages[-1]]
+                # Make sure history exists before trying to use it
+                history = context.get("history", [])
+                if history:
+                    # Insert history between system message and user query
+                    messages = [messages[0]] + history + [messages[-1]]
 
                 logger.debug(f"Generating commands with {len(messages)} messages")
 

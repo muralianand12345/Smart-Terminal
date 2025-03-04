@@ -59,7 +59,7 @@ def run_setup(quiet: bool = False) -> bool:
 
         # Get model name
         model_name = input(
-            f"Enter model name [{config.get('model_name', 'llama-3.1-70b-versatile')}]: "
+            f"Enter model name [{config.get('model_name', 'llama-3.3-70b-versatile')}]: "
         )
         if model_name:
             config["model_name"] = model_name

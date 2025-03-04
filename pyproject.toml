@@ -6,10 +6,18 @@ authors = ["Murali Anand <smurali1607@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/muralianand12345/Smart-Terminal"
+documentation = "https://github.com/muralianand12345/Smart-Terminal/README.md"
+keywords = ["cli", "terminal", "ai", "commands", "natural-language"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Topic :: Terminals",
+    "Topic :: Utilities",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
 ]
 packages = [{include = "smart_terminal"}]
 
@@ -18,14 +26,14 @@ python = "^3.10"
 openai = ">=1.65.2"
 pydantic = ">=2.10.6"
 
-[tool.poetry.scripts]
-st = "smart_terminal.cli:run_cli"
-
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 pytest-cov = "^6.0.0"
 pytest-mock = "^3.14.0"
 pytest-asyncio = "^0.25.3"
+
+[tool.poetry.scripts]
+st = "smart_terminal.cli:run_cli"
 
 [build-system]
 requires = ["poetry-core"]

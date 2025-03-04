@@ -21,7 +21,7 @@ DEFAULT_CONFIG = {
     # AI settings
     "api_key": "",
     "base_url": "https://api.groq.com/openai/v1",
-    "model_name": "llama-3.1-70b-versatile",
+    "model_name": "llama-3.3-70b-versatile",
     "temperature": 0.0,
     # History settings
     "history_limit": 20,
