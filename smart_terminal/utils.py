@@ -118,7 +118,7 @@ def print_banner():
     banner = f"""
 {Colors.CYAN}╔══════════════════════════════════════════════════╗
 ║                                                  ║
-║  {Colors.GREEN}SmartTerminal{Colors.CYAN}                                  ║
+║  {Colors.GREEN}SmartTerminal{Colors.CYAN}                                   ║
 ║  {Colors.BLUE}AI-Powered Terminal Commands{Colors.CYAN}                    ║
 ║                                                  ║
 ╚══════════════════════════════════════════════════╝{Colors.RESET}

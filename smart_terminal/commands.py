@@ -5,6 +5,8 @@ This module handles generating terminal commands from natural language using AI
 and executing those commands with proper user input handling.
 """
 
+import os
+import sys
 import logging
 import subprocess
 from typing import List, Dict, Any, Tuple, Optional
@@ -99,12 +101,12 @@ class CommandGenerator:
             str: System prompt instructing the AI how to generate commands.
         """
         return f"""You are an expert terminal command assistant. 
-        
+    
 When users request tasks:
 1. Break complex tasks into individual terminal commands
 2. For each command, specify:
-   - The exact command with placeholders (like <folder_name>) for user inputs
-   - List all required user inputs that correspond to placeholders
+   - The exact command with specific values where available (don't use placeholders when data is present)
+   - List only required user inputs that are actually unknown
    - Specify the OS (default: {default_os})
    - Indicate if admin/root privileges are needed
    - Include a brief description of what this command does
@@ -112,11 +114,14 @@ When users request tasks:
 Important rules:
 - Generate ONE command per tool call
 - If a task requires multiple commands, make multiple separate tool calls in sequence
-- Use placeholders with angle brackets for any user input values
-- Make sure the user_inputs field contains strings matching EXACTLY to the placeholders in the command (without the < >)
-- Include "sudo" in user_inputs list if the command requires admin privileges
-- Make commands as specific and accurate as possible
+- Only use placeholders for truly unknown values
+- When the user mentions a specific file or directory that was clearly provided, use it directly instead of a placeholder
+- For directory navigation, prefer absolute paths with '~' for home directory when appropriate
+- Remember the current working directory and reference it for context
+- Prefer specific, complete commands over abstract ones with placeholders
+- For common directories like 'Desktop', 'Documents', 'Downloads', etc., use them directly without placeholders
 - Default to {default_os} commands unless specified otherwise
+- For 'cd' commands, always use the full directory path if known from context
 """
 
     async def generate_commands(
@@ -243,7 +248,7 @@ class CommandExecutor:
 
     @staticmethod
     def execute_command(
-        command_str: str, requires_admin: bool = False
+        command_str: str, requires_admin: bool = False, shell_integration: bool = False
     ) -> Tuple[bool, str]:
         """
         Execute a shell command and return the output.
@@ -251,6 +256,7 @@ class CommandExecutor:
         Args:
             command_str (str): Command to execute.
             requires_admin (bool): Whether the command requires admin privileges.
+            shell_integration (bool): Whether to use shell integration for environment-changing commands.
 
         Returns:
             Tuple[bool, str]: Success status and output/error message.
@@ -263,7 +269,52 @@ class CommandExecutor:
                 f"Executing command: {command_str}, requires_admin={requires_admin}"
             )
 
-            import sys
+            # Handle cd commands using shell integration
+            if command_str.strip().startswith("cd ") and shell_integration:
+                from smart_terminal.shell_integration import ShellIntegration
+
+                shell = ShellIntegration()
+
+                # Extract the target directory
+                target_dir = command_str.strip()[3:].strip()
+
+                # Write the command to a file that will be sourced by the shell
+                shell.write_shell_commands([command_str], "Change directory")
+
+                # For preview, attempt to change directory and show result
+                # This won't affect the parent shell but gives feedback
+                if target_dir.startswith("~"):
+                    target_dir = os.path.expanduser(target_dir)
+
+                try:
+                    os.chdir(target_dir)
+                    return (
+                        True,
+                        f"Shell integration: Directory will be changed to: {os.getcwd()}\n(Note: You'll need to source the command file or use the shell integration to apply this change)",
+                    )
+                except FileNotFoundError:
+                    return False, f"Directory not found: {target_dir}"
+                except PermissionError:
+                    return False, f"Permission denied: {target_dir}"
+                except Exception as e:
+                    return False, str(e)
+
+            # Handle environment variable setting with shell integration
+            if (
+                command_str.strip().startswith("export ")
+                or "=" in command_str.strip().split()[0]
+            ) and shell_integration:
+                from smart_terminal.shell_integration import ShellIntegration
+
+                shell = ShellIntegration()
+
+                # Write the command to a file that will be sourced by the shell
+                shell.write_shell_commands([command_str], "Set environment variable")
+
+                return (
+                    True,
+                    "Shell integration: Environment variable will be set\n(Note: You'll need to source the command file or use the shell integration to apply this change)",
+                )
 
             if requires_admin and sys.platform != "win32":
                 command_str = f"sudo {command_str}"
@@ -369,7 +420,14 @@ class CommandExecutor:
             bool: True if all commands were executed successfully, False otherwise.
         """
         from smart_terminal.utils import Colors
+        from smart_terminal.config import ConfigManager
 
+        # Check if shell integration is enabled in config
+        config = ConfigManager.load_config()
+        shell_integration_enabled = config.get("shell_integration_enabled", False)
+
+        environment_changing_commands = ["cd ", "export ", "="]
+        commands_for_shell_integration = []
         success = True
 
         # Process each command
@@ -399,13 +457,36 @@ class CommandExecutor:
             print(Colors.info(f"Executing: {Colors.cmd(final_command)}"))
 
             try:
-                success_cmd, output = cls.execute_command(final_command, requires_admin)
+                # Check if this is an environment-changing command that needs shell integration
+                needs_shell_integration = shell_integration_enabled and any(
+                    final_command.strip().startswith(prefix)
+                    for prefix in environment_changing_commands
+                )
+
+                if needs_shell_integration:
+                    commands_for_shell_integration.append(final_command)
+
+                success_cmd, output = cls.execute_command(
+                    final_command,
+                    requires_admin,
+                    shell_integration=needs_shell_integration,
+                )
                 success = success and success_cmd
 
                 if success_cmd:
                     print(Colors.success("Command executed successfully:"))
                     if output.strip():  # Only print output if it's not empty
                         print(output)
+
+                    # Show current directory after execution (especially for cd commands)
+                    current_dir = os.getcwd()
+                    username = os.environ.get(
+                        "USER", os.environ.get("USERNAME", "user")
+                    )
+                    hostname = os.environ.get(
+                        "HOSTNAME", os.environ.get("COMPUTERNAME", "localhost")
+                    )
+                    print(f"\n{Colors.info(f'{username}@{hostname} {current_dir} % ')}")
                 else:
                     print(Colors.error("Command failed:"))
                     print(output)
@@ -414,5 +495,29 @@ class CommandExecutor:
                 from smart_terminal.utils import print_error
 
                 print_error(str(e))
+
+        # Only write shell integration commands if there are environment-changing commands
+        # that require shell integration
+        if commands_for_shell_integration and shell_integration_enabled:
+            from smart_terminal.shell_integration import ShellIntegration
+
+            shell = ShellIntegration()
+
+            # Create the shell commands file with the commands
+            shell.write_shell_commands(
+                commands_for_shell_integration, "Generated by SmartTerminal"
+            )
+
+            # Now check if shell integration is active
+            shell_integration_working = shell.is_shell_integration_active()
+
+            # Only show the reminder if shell integration is not working
+            if not shell_integration_working and shell.check_needs_sourcing():
+                print(f"\n{Colors.highlight('Shell Integration:')}")
+                print(
+                    Colors.info(
+                        "To apply environment changes, run: source ~/.smartterminal/shell_history/last_commands.sh"
+                    )
+                )
 
         return success

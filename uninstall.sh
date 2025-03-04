@@ -5,6 +5,7 @@ pip uninstall smart-terminal-cli
 rm -rf ~/.smartterminal
 rm -f ~/.local/bin/st
 rm -rf ~/.smartterminal/venv
+rm -rf ./dist
 
 export PATH="$PATH:$HOME/.local/bin"
 
