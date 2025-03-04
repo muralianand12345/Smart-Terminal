@@ -6,3 +6,4 @@ poetry.lock
 **/__pycache__/
 **.egg-info
 dist
+.pytest_cache
