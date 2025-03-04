@@ -229,6 +229,15 @@ Important rules:
                 # Make sure context and history exist before trying to use them
                 history = context.get("history", [])
                 if history:
+                    # Ensure history is a list to avoid type errors
+                    if not isinstance(history, list):
+                        history = [history]
+
+                    # Ensure all history items are compatible with messages format
+                    for i, item in enumerate(history):
+                        if not isinstance(item, dict) or "role" not in item:
+                            history[i] = {"role": "user", "content": str(item)}
+
                     messages = history + messages
 
                 if not system_prompt:
@@ -245,13 +254,23 @@ Important rules:
 
                     # Add history and user message
                     for msg in messages:
-                        if msg["role"] == "user":
+                        if isinstance(msg, dict):
+                            if msg.get("role") == "user":
+                                msg_objects.append(
+                                    UserMessage(
+                                        role="user", content=msg.get("content", "")
+                                    )
+                                )
+                            elif msg.get("role") == "assistant":
+                                msg_objects.append(
+                                    AIMessage(
+                                        role="assistant", content=msg.get("content", "")
+                                    )
+                                )
+                        else:
+                            # If message is not a dict, convert it
                             msg_objects.append(
-                                UserMessage(role="user", content=msg["content"])
-                            )
-                        elif msg["role"] == "assistant":
-                            msg_objects.append(
-                                AIMessage(role="assistant", content=msg["content"])
+                                UserMessage(role="user", content=str(msg))
                             )
 
                     tool_calls = await self.adapter.generate_commands(
@@ -298,6 +317,15 @@ Important rules:
                 # Make sure history exists before trying to use it
                 history = context.get("history", [])
                 if history:
+                    # Ensure history is a list to avoid type errors
+                    if not isinstance(history, list):
+                        history = [history]
+
+                    # Ensure all history items are compatible with messages format
+                    for i, item in enumerate(history):
+                        if not isinstance(item, dict) or "role" not in item:
+                            history[i] = {"role": "user", "content": str(item)}
+
                     # Insert history between system message and user query
                     messages = [messages[0]] + history + [messages[-1]]
 
