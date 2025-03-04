@@ -1,6 +1,6 @@
 #For Debugging Dev
-poetry remove smart-terminal
-pip uninstall smart-terminal
+poetry remove smart-terminal-cli
+pip uninstall smart-terminal-cli
 
 rm -rf ~/.smartterminal
 rm -f ~/.local/bin/st
