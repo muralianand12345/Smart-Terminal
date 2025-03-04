@@ -8,14 +8,16 @@ environment, particularly for directory changes and environment variables.
 import os
 import logging
 import subprocess
-from pathlib import Path
 from typing import List
+from pathlib import Path
+
+from smart_terminal.core.base import ShellIntegrator
 
 # Setup logging
-logger = logging.getLogger("smartterminal.shell_integration")
+logger = logging.getLogger(__name__)
 
 
-class ShellIntegration:
+class ShellIntegration(ShellIntegrator):
     """
     Shell integration for SmartTerminal.
 
@@ -72,6 +74,7 @@ class ShellIntegration:
     def clear_needs_sourcing(self) -> None:
         """
         Clear the needs_sourcing marker file.
+
         This is used when the shell integration function has automatically
         sourced the commands or when we don't need to show the reminder.
         """
@@ -134,7 +137,7 @@ class ShellIntegration:
             if test_marker.exists():
                 test_marker.unlink()
 
-            # Clean up the needs_sourcing marker
+            # Clean up the needs_sourcing marker if integration is active
             if is_active and self.marker_file.exists():
                 self.marker_file.unlink()
 
@@ -154,6 +157,34 @@ class ShellIntegration:
         Returns:
             str: Shell integration script
         """
+        shell_type = os.environ.get("SHELL", "")
+
+        if "zsh" in shell_type:
+            return self._get_zsh_integration_script()
+        else:
+            # Default to bash script
+            return self._get_bash_integration_script()
+
+    def _get_bash_integration_script(self) -> str:
+        """Get shell integration script for Bash."""
+        return """
+# SmartTerminal shell integration
+function smart_terminal_integration() {
+    # Check if there are commands to source
+    if [ -f "$HOME/.smartterminal/shell_history/needs_sourcing" ]; then
+        source "$HOME/.smartterminal/shell_history/last_commands.sh"
+    fi
+}
+
+# Alias the st command to include shell integration
+function st() {
+    command st "$@"
+    smart_terminal_integration
+}
+"""
+
+    def _get_zsh_integration_script(self) -> str:
+        """Get shell integration script for Zsh."""
         return """
 # SmartTerminal shell integration
 function smart_terminal_integration() {

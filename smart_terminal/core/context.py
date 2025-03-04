@@ -13,11 +13,28 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, List
 
+from smart_terminal.core.base import ContextProvider
+
+try:
+    from smart_terminal.models.context import (
+        ContextData,
+        DirectoryContext,
+        SystemInfo,
+        GitInfo,
+        FileSystemEntry,
+        CommandHistory,
+        PatternMatches,
+    )
+
+    MODELS_AVAILABLE = True
+except ImportError:
+    MODELS_AVAILABLE = False
+
 # Setup logging
-logger = logging.getLogger("smartterminal.context")
+logger = logging.getLogger(__name__)
 
 
-class ContextGenerator:
+class ContextGenerator(ContextProvider):
     """
     Generates context information for SmartTerminal.
 
@@ -25,8 +42,18 @@ class ContextGenerator:
     better context to the AI when generating commands.
     """
 
-    @staticmethod
-    def get_directory_info(max_entries: int = 50) -> Dict[str, Any]:
+    def __init__(self, max_history: int = 5):
+        """
+        Initialize context generator.
+
+        Args:
+            max_history: Maximum number of recent commands to track
+        """
+        self.max_history = max_history
+        self.recent_commands = []
+        self.recent_outputs = []
+
+    def get_directory_info(self, max_entries: int = 50) -> Dict[str, Any]:
         """
         Get information about the current directory structure.
 
@@ -80,8 +107,7 @@ class ContextGenerator:
             logger.error(f"Error getting directory info: {e}")
             return {"error": str(e)}
 
-    @staticmethod
-    def get_system_info() -> Dict[str, Any]:
+    def get_system_info(self) -> Dict[str, Any]:
         """
         Get basic system information.
 
@@ -100,8 +126,7 @@ class ContextGenerator:
             logger.error(f"Error getting system info: {e}")
             return {"error": str(e)}
 
-    @staticmethod
-    def get_git_info() -> Dict[str, Any]:
+    def get_git_info(self) -> Dict[str, Any]:
         """
         Get git repository information if available.
 
@@ -136,19 +161,27 @@ class ContextGenerator:
                 check=False,
             )
 
+            # Check if there are changes
+            status_result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
             return {
                 "is_git_repo": True,
                 "repo_root": root_result.stdout.strip(),
                 "branch": branch_result.stdout.strip()
                 if branch_result.returncode == 0
                 else "unknown",
+                "has_changes": bool(status_result.stdout.strip()),
             }
         except Exception as e:
             logger.debug(f"Error getting git info (probably not a git repo): {e}")
             return {}
 
-    @staticmethod
-    def get_pattern_matches(patterns: List[str]) -> Dict[str, List[str]]:
+    def get_pattern_matches(self, patterns: List[str]) -> Dict[str, List[str]]:
         """
         Get files matching specific patterns.
 
@@ -169,8 +202,28 @@ class ContextGenerator:
 
         return result
 
-    @classmethod
-    def generate_context(cls) -> Dict[str, Any]:
+    def update_context(self, command: str, output: str) -> None:
+        """
+        Update context with a recently executed command.
+
+        Args:
+            command: Executed command
+            output: Command output
+        """
+        # Add command to recent commands
+        self.recent_commands.append(command)
+
+        # Add output to recent outputs
+        self.recent_outputs.append(output)
+
+        # Limit history to max_history
+        if len(self.recent_commands) > self.max_history:
+            self.recent_commands.pop(0)
+
+        if len(self.recent_outputs) > self.max_history:
+            self.recent_outputs.pop(0)
+
+    def generate_context(self) -> Dict[str, Any]:
         """
         Generate comprehensive context information.
 
@@ -178,12 +231,12 @@ class ContextGenerator:
             Dict with all context information
         """
         context = {
-            "directory": cls.get_directory_info(),
-            "system": cls.get_system_info(),
+            "directory": self.get_directory_info(),
+            "system": self.get_system_info(),
         }
 
         # Add git info if available
-        git_info = cls.get_git_info()
+        git_info = self.get_git_info()
         if git_info:
             context["git"] = git_info
 
@@ -204,21 +257,88 @@ class ContextGenerator:
             "CMakeLists.txt",
         ]
 
-        pattern_matches = cls.get_pattern_matches(common_patterns)
+        pattern_matches = self.get_pattern_matches(common_patterns)
         if pattern_matches:
             context["project_files"] = pattern_matches
 
+        # Add command history if available
+        if self.recent_commands:
+            context["history"] = {
+                "recent_commands": self.recent_commands,
+                "recent_outputs": self.recent_outputs,
+            }
+
+        # If models are available, convert to model objects
+        if MODELS_AVAILABLE:
+            return self._to_context_model(context).model_dump()
+
         return context
 
-    @classmethod
-    def get_context_prompt(cls) -> str:
+    def _to_context_model(self, context: Dict[str, Any]) -> "ContextData":
         """
-        Generate a context prompt for the AI model based on the current environment.
+        Convert context dictionary to ContextData model.
+
+        Args:
+            context: Context dictionary
 
         Returns:
-            str: Context prompt for the AI model
+            ContextData model
         """
-        context = cls.generate_context()
+        if not MODELS_AVAILABLE:
+            raise ImportError("Models not available")
+
+        # Create DirectoryContext
+        dir_info = context["directory"]
+
+        # Convert entries to FileSystemEntry objects
+        entries = []
+        for entry in dir_info.get("entries", []):
+            entries.append(FileSystemEntry(**entry))
+
+        directory = DirectoryContext(
+            current_dir=dir_info["current_dir"],
+            parent_dir=dir_info["parent_dir"],
+            entries=entries,
+            entry_count=dir_info["entry_count"],
+            truncated=dir_info["truncated"],
+        )
+
+        # Create SystemInfo
+        system_info = context["system"]
+        system = SystemInfo(**system_info)
+
+        # Create GitInfo if available
+        git = None
+        if "git" in context:
+            git = GitInfo(**context["git"])
+
+        # Create PatternMatches if available
+        project_files = None
+        if "project_files" in context:
+            project_files = PatternMatches(patterns=context["project_files"])
+
+        # Create CommandHistory if available
+        history = None
+        if "history" in context:
+            history = CommandHistory(**context["history"])
+
+        # Create ContextData
+        return ContextData(
+            directory=directory,
+            system=system,
+            git=git,
+            project_files=project_files,
+            history=history,
+        )
+
+    def get_context_prompt(self) -> str:
+        """
+        Generate a context prompt for the AI model.
+
+        Returns:
+            Context prompt for the AI model
+        """
+        context = self.generate_context()
 
         # Build a context prompt for the AI
         prompt_parts = []
@@ -263,5 +383,22 @@ class ContextGenerator:
         if git_info:
             prompt_parts.append(f"Git Repository: {git_info.get('repo_root')}")
             prompt_parts.append(f"Git Branch: {git_info.get('branch')}")
+
+            if git_info.get("has_changes") is not None:
+                status = (
+                    "has uncommitted changes"
+                    if git_info.get("has_changes")
+                    else "is clean"
+                )
+                prompt_parts.append(f"Git Status: Repository {status}")
+
+        # Add recent commands
+        history = context.get("history", {})
+        if history:
+            recent_commands = history.get("recent_commands", [])
+            if recent_commands:
+                prompt_parts.append("Recent commands:")
+                for cmd in recent_commands:
+                    prompt_parts.append(f"  $ {cmd}")
 
         return "\n".join(prompt_parts)

@@ -17,20 +17,49 @@ Features:
 Author: Murali Anand (https://github.com/muralianand12345)
 """
 
-__version__ = "1.2.0"
+__version__ = "2.0.0"
 
-from smart_terminal.terminal import SmartTerminal
-from smart_terminal.config import ConfigManager
-from smart_terminal.ai import AIClient, AIError
-from smart_terminal.commands import CommandGenerator, CommandExecutor, CommandError
+# Import subpackages for easier access
+from smart_terminal.models import (
+    Command,
+    CommandResult,
+    AIMessage,
+    UserMessage,
+    Config,
+    ContextData,
+)
 
+from smart_terminal.core import (
+    SmartTerminal,
+    AIClient,
+    CommandGenerator,
+    CommandExecutor,
+)
 
+from smart_terminal.exceptions import (
+    SmartTerminalError,
+    AIError,
+    CommandError,
+    ConfigError,
+)
+
+# Export primary classes for easier imports
 __all__ = [
+    # Core components
     "SmartTerminal",
-    "ConfigManager",
     "AIClient",
-    "AIError",
     "CommandGenerator",
     "CommandExecutor",
+    # Models
+    "Command",
+    "CommandResult",
+    "AIMessage",
+    "UserMessage",
+    "Config",
+    "ContextData",
+    # Exceptions
+    "SmartTerminalError",
+    "AIError",
     "CommandError",
+    "ConfigError",
 ]
