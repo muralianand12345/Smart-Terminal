@@ -113,7 +113,6 @@ class AIClient(AIProvider):
                     )
 
         except Exception as e:
-            logger.error(f"Failed to initialize AI client: {e}")
             raise AIError(f"Failed to initialize AI client: {e}")
 
     def get_system_prompt(self, context: Dict[str, Any] = None) -> str:
@@ -282,7 +281,6 @@ Important rules:
                     return commands
 
             except Exception as e:
-                logger.error(f"Error generating commands with adapter: {e}")
                 raise AIError(f"Error generating commands: {e}")
 
         else:
@@ -335,7 +333,6 @@ Important rules:
                 return commands
 
             except Exception as e:
-                logger.error(f"Error generating commands: {e}")
                 raise AIError(f"Error generating commands: {e}")
 
     async def invoke_tool(
@@ -415,7 +412,6 @@ Important rules:
                     return tool_calls[0].arguments
 
             except Exception as e:
-                logger.error(f"Error invoking tool with adapter: {e}")
                 raise AIError(f"Error invoking tool: {e}")
 
         else:
@@ -464,5 +460,4 @@ Important rules:
                 return json.loads(tc.function.arguments)
 
             except Exception as e:
-                logger.error(f"Error invoking tool: {e}")
                 raise AIError(f"Error invoking tool: {e}")

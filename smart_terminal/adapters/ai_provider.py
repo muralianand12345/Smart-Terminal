@@ -137,13 +137,11 @@ class OpenAIAdapter(AIProviderAdapter):
 
             logger.debug(f"OpenAI adapter initialized with model {self.model_name}")
         except ImportError:
-            logger.error("OpenAI Python package not installed")
             raise AIProviderError(
                 "OpenAI Python package not installed. "
                 "Please install with 'pip install openai'"
             )
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client: {e}")
             raise AIProviderError(f"Failed to initialize OpenAI client: {e}")
 
     def get_command_tool_spec(self) -> Dict[str, Any]:
@@ -262,7 +260,6 @@ class OpenAIAdapter(AIProviderAdapter):
             return tool_calls
 
         except Exception as e:
-            logger.error(f"Error generating commands with OpenAI: {e}")
             raise AIProviderError(f"Error generating commands: {e}")
 
     async def invoke_tool(
@@ -339,7 +336,6 @@ class OpenAIAdapter(AIProviderAdapter):
             return tool_calls
 
         except Exception as e:
-            logger.error(f"Error invoking tool with OpenAI: {e}")
             raise AIProviderError(f"Error invoking tool: {e}")
 
     @classmethod
@@ -397,13 +393,11 @@ class GroqAdapter(AIProviderAdapter):
 
             logger.debug(f"Groq adapter initialized with model {self.model_name}")
         except ImportError:
-            logger.error("OpenAI Python package not installed")
             raise AIProviderError(
                 "OpenAI Python package not installed. "
                 "Please install with 'pip install openai'"
             )
         except Exception as e:
-            logger.error(f"Failed to initialize Groq client: {e}")
             raise AIProviderError(f"Failed to initialize Groq client: {e}")
 
     def get_command_tool_spec(self) -> Dict[str, Any]:
@@ -522,7 +516,6 @@ class GroqAdapter(AIProviderAdapter):
             return tool_calls
 
         except Exception as e:
-            logger.error(f"Error generating commands with Groq: {e}")
             raise AIProviderError(f"Error generating commands: {e}")
 
     async def invoke_tool(
@@ -599,7 +592,6 @@ class GroqAdapter(AIProviderAdapter):
             return tool_calls
 
         except Exception as e:
-            logger.error(f"Error invoking tool with Groq: {e}")
             raise AIProviderError(f"Error invoking tool: {e}")
 
     @classmethod
@@ -654,13 +646,11 @@ class AnthropicAdapter(AIProviderAdapter):
 
             logger.debug(f"Anthropic adapter initialized with model {self.model_name}")
         except ImportError:
-            logger.error("Anthropic Python package not installed")
             raise AIProviderError(
                 "Anthropic Python package not installed. "
                 "Please install with 'pip install anthropic'"
             )
         except Exception as e:
-            logger.error(f"Failed to initialize Anthropic client: {e}")
             raise AIProviderError(f"Failed to initialize Anthropic client: {e}")
 
     def get_command_tool_spec(self) -> Dict[str, Any]:
@@ -789,7 +779,6 @@ class AnthropicAdapter(AIProviderAdapter):
             return tool_calls
 
         except Exception as e:
-            logger.error(f"Error generating commands with Anthropic: {e}")
             raise AIProviderError(f"Error generating commands: {e}")
 
     async def invoke_tool(
@@ -884,7 +873,6 @@ class AnthropicAdapter(AIProviderAdapter):
             return tool_calls
 
         except Exception as e:
-            logger.error(f"Error invoking tool with Anthropic: {e}")
             raise AIProviderError(f"Error invoking tool: {e}")
 
     @classmethod

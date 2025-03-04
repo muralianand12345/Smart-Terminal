@@ -84,7 +84,6 @@ class CommandGenerator:
             # Re-raise AIError since it's already properly formatted
             raise
         except Exception as e:
-            logger.error(f"Unexpected error in command generation: {e}")
             raise AIError(f"Failed to generate commands: {e}")
 
 
@@ -141,13 +140,9 @@ class CommandExecutor(CommandProcessor):
                 logger.debug("Command executed successfully")
                 return True, result.stdout
             else:
-                logger.error(
-                    f"Command failed with return code {result.returncode}: {result.stderr}"
-                )
                 return False, result.stderr
 
         except Exception as e:
-            logger.error(f"Exception while executing command: {e}")
             raise CommandError(f"Command execution failed: {e}", command=command)
 
     def prompt_for_input(self, input_name: str) -> str:

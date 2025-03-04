@@ -67,7 +67,6 @@ class ConfigManager:
                 logger.info(f"Created history file at {cls.HISTORY_FILE}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize configuration: {e}")
             raise ConfigError(
                 f"Failed to initialize configuration: {e}",
                 config_file=str(cls.CONFIG_FILE),
@@ -120,7 +119,6 @@ class ConfigManager:
             return default_config
 
         except Exception as e:
-            logger.error(f"Unexpected error loading config: {e}")
             raise ConfigError(
                 f"Failed to load configuration: {e}",
                 config_file=str(cls.CONFIG_FILE),
@@ -155,7 +153,6 @@ class ConfigManager:
             logger.debug("Configuration saved successfully")
 
         except Exception as e:
-            logger.error(f"Failed to save configuration: {e}")
             raise ConfigError(
                 f"Failed to save configuration: {e}",
                 config_file=str(cls.CONFIG_FILE),
@@ -186,7 +183,6 @@ class ConfigManager:
             return []
 
         except Exception as e:
-            logger.error(f"Error loading history: {e}")
             return []
 
     @classmethod
@@ -247,7 +243,6 @@ class ConfigManager:
             logger.info("Command history cleared")
 
         except Exception as e:
-            logger.error(f"Failed to clear history: {e}")
             raise ConfigError(
                 f"Failed to clear history: {e}",
                 config_file=str(cls.HISTORY_FILE),
@@ -279,7 +274,6 @@ class ConfigManager:
             logger.debug(f"Updated config: {key}={value}")
 
         except Exception as e:
-            logger.error(f"Failed to update config value: {e}")
             raise ConfigError(
                 f"Failed to update configuration: {e}", config_key=key, cause=e
             )
@@ -304,7 +298,6 @@ class ConfigManager:
             return config.get(key, default)
 
         except Exception as e:
-            logger.error(f"Error retrieving config value: {e}")
             return default
 
     @classmethod
@@ -329,7 +322,6 @@ class ConfigManager:
             return Config.from_dict(config_dict)
 
         except Exception as e:
-            logger.error(f"Error creating config model: {e}")
             return None
 
     @classmethod
@@ -352,7 +344,6 @@ class ConfigManager:
             cls.save_config(config_dict)
 
         except Exception as e:
-            logger.error(f"Error saving config model: {e}")
             raise ConfigError(f"Failed to save configuration model: {e}", cause=e)
 
     @classmethod

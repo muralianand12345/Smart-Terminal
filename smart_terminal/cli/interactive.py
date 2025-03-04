@@ -93,7 +93,6 @@ async def run_interactive_mode(
                 continue
 
             except Exception as e:
-                logger.error(f"Error in interactive mode: {e}", exc_info=True)
                 print(Colors.error(f"An error occurred: {e}"))
 
     except KeyboardInterrupt:
@@ -101,7 +100,6 @@ async def run_interactive_mode(
             print("\n" + Colors.warning("Exiting..."))
 
     except Exception as e:
-        logger.error(f"Error in interactive mode: {e}", exc_info=True)
         print(Colors.error(f"An error occurred: {e}"))
 
 
@@ -153,7 +151,6 @@ def show_history(terminal: Any) -> None:
             print(f"{i + 1:2d}. {Colors.cmd(msg.get('content', ''))}")
 
     except Exception as e:
-        logger.error(f"Error showing history: {e}")
         print(Colors.error(f"Error showing history: {e}"))
 
 
@@ -171,7 +168,6 @@ def show_config(config: Optional[Dict[str, Any]]) -> None:
 
             config = ConfigManager.load_config()
         except Exception as e:
-            logger.error(f"Error loading config: {e}")
             print(Colors.error(f"Error loading config: {e}"))
             return
 

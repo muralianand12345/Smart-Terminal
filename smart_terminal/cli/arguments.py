@@ -136,7 +136,6 @@ def validate_args(args: Namespace) -> bool:
 
     for conflict_condition, conflict_message in conflicts:
         if conflict_condition:
-            logger.error(f"Argument conflict: {conflict_message}")
             return False
 
     # Check for required arguments
@@ -151,7 +150,6 @@ def validate_args(args: Namespace) -> bool:
             args.config_info,
         ]
     ):
-        logger.error("No command or action specified")
         return False
 
     return True

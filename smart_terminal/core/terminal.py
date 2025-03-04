@@ -123,7 +123,6 @@ class SmartTerminal(TerminalInterface):
             )
 
         except Exception as e:
-            logger.error(f"Failed to initialize SmartTerminal: {e}")
             raise SmartTerminalError(f"Failed to initialize SmartTerminal: {e}")
 
     def set_dry_run(self, enabled: bool) -> None:
@@ -256,11 +255,9 @@ class SmartTerminal(TerminalInterface):
 
         except AIError as e:
             print_error(str(e))
-            logger.error(f"AI error during command processing: {e}")
             return False
         except Exception as e:
             print_error(f"An unexpected error occurred: {e}")
-            logger.error(f"Unexpected error in process_input: {e}", exc_info=True)
             return False
 
     async def run_command(self, command: str) -> Union[bool, Dict[str, Any]]:
@@ -346,7 +343,6 @@ class SmartTerminal(TerminalInterface):
                 print("\n" + Colors.warning("Exiting..."))
                 break
             except Exception as e:
-                logger.error(f"Error in interactive mode: {e}", exc_info=True)
                 print_error(f"An error occurred: {e}")
 
     def _show_interactive_help(self) -> None:
@@ -465,7 +461,6 @@ class SmartTerminal(TerminalInterface):
             print_error(str(e))
             return False
         except Exception as e:
-            logger.error(f"Unexpected error in setup: {e}", exc_info=True)
             print_error(f"Setup failed: {e}")
             return False
 
@@ -562,9 +557,6 @@ class SmartTerminal(TerminalInterface):
             return True
 
         except Exception as e:
-            logger.error(
-                f"Unexpected error in shell integration setup: {e}", exc_info=True
-            )
             print_error(f"Shell integration setup failed: {e}")
             return False
 

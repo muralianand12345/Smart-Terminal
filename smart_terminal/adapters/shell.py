@@ -152,9 +152,6 @@ class BashAdapter(ShellAdapter):
                     logger.debug("Command executed successfully")
                     return True, result.stdout
                 else:
-                    logger.error(
-                        f"Command failed with return code {result.returncode}: {result.stderr}"
-                    )
                     return False, result.stderr
             else:
                 # Execute without capturing output
@@ -166,7 +163,6 @@ class BashAdapter(ShellAdapter):
                 )
 
         except Exception as e:
-            logger.error(f"Exception while executing command: {e}")
             return False, f"Command execution failed: {e}"
 
     def write_environment_command(
@@ -206,7 +202,6 @@ class BashAdapter(ShellAdapter):
             return str(self.command_file)
 
         except Exception as e:
-            logger.error(f"Failed to write shell commands: {e}")
             return ""
 
     def get_integration_script(self) -> str:
@@ -267,7 +262,6 @@ function st() {
             return is_active
 
         except Exception as e:
-            logger.error(f"Error checking shell integration: {e}")
             return False
 
     @classmethod
@@ -342,9 +336,6 @@ class ZshAdapter(ShellAdapter):
                     logger.debug("Command executed successfully")
                     return True, result.stdout
                 else:
-                    logger.error(
-                        f"Command failed with return code {result.returncode}: {result.stderr}"
-                    )
                     return False, result.stderr
             else:
                 # Execute without capturing output
@@ -356,7 +347,6 @@ class ZshAdapter(ShellAdapter):
                 )
 
         except Exception as e:
-            logger.error(f"Exception while executing command: {e}")
             return False, f"Command execution failed: {e}"
 
     def write_environment_command(
@@ -396,7 +386,6 @@ class ZshAdapter(ShellAdapter):
             return str(self.command_file)
 
         except Exception as e:
-            logger.error(f"Failed to write shell commands: {e}")
             return ""
 
     def get_integration_script(self) -> str:
@@ -457,7 +446,6 @@ function st() {
             return is_active
 
         except Exception as e:
-            logger.error(f"Error checking shell integration: {e}")
             return False
 
     @classmethod
@@ -533,9 +521,6 @@ class PowerShellAdapter(ShellAdapter):
                     logger.debug("Command executed successfully")
                     return True, result.stdout
                 else:
-                    logger.error(
-                        f"Command failed with return code {result.returncode}: {result.stderr}"
-                    )
                     return False, result.stderr
             else:
                 # Execute without capturing output
@@ -546,7 +531,6 @@ class PowerShellAdapter(ShellAdapter):
                 )
 
         except Exception as e:
-            logger.error(f"Exception while executing command: {e}")
             return False, f"Command execution failed: {e}"
 
     def write_environment_command(
@@ -583,7 +567,6 @@ class PowerShellAdapter(ShellAdapter):
             return str(self.command_file)
 
         except Exception as e:
-            logger.error(f"Failed to write shell commands: {e}")
             return ""
 
     def get_integration_script(self) -> str:
@@ -649,7 +632,6 @@ function st {
             return is_active
 
         except Exception as e:
-            logger.error(f"Error checking shell integration: {e}")
             return False
 
     @classmethod

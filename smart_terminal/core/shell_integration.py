@@ -68,7 +68,6 @@ class ShellIntegration(ShellIntegrator):
             return str(self.command_file)
 
         except Exception as e:
-            logger.error(f"Failed to write shell commands: {e}")
             return ""
 
     def clear_needs_sourcing(self) -> None:
@@ -144,7 +143,6 @@ class ShellIntegration(ShellIntegrator):
             return is_active
 
         except Exception as e:
-            logger.error(f"Error checking shell integration: {e}")
             return False
 
     def get_shell_integration_script(self) -> str:

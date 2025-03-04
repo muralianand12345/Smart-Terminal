@@ -104,7 +104,6 @@ class ContextGenerator(ContextProvider):
                 "truncated": len(entries) >= max_entries,
             }
         except Exception as e:
-            logger.error(f"Error getting directory info: {e}")
             return {"error": str(e)}
 
     def get_system_info(self) -> Dict[str, Any]:
@@ -123,7 +122,6 @@ class ContextGenerator(ContextProvider):
                 "username": os.environ.get("USER") or os.environ.get("USERNAME"),
             }
         except Exception as e:
-            logger.error(f"Error getting system info: {e}")
             return {"error": str(e)}
 
     def get_git_info(self) -> Dict[str, Any]:

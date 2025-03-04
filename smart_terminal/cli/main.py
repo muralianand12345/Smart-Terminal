@@ -109,7 +109,6 @@ def run_setup(quiet: bool = False) -> bool:
         print_error(str(e))
         return False
     except Exception as e:
-        logger.error(f"Unexpected error in setup: {e}", exc_info=True)
         print_error(f"Setup failed: {e}")
         return False
 
@@ -239,7 +238,6 @@ def setup_shell_integration() -> bool:
             return False
 
     except Exception as e:
-        logger.error(f"Unexpected error in shell integration setup: {e}", exc_info=True)
         print_error(f"Shell integration setup failed: {e}")
         return False
 
@@ -303,17 +301,14 @@ async def run_single_command(
         return True
 
     except AIError as e:
-        logger.error(f"AI error: {e}")
         print_error(str(e))
         return False
 
     except CommandError as e:
-        logger.error(f"Command error: {e}")
         print_error(str(e))
         return False
 
     except Exception as e:
-        logger.error(f"Error executing command: {e}", exc_info=True)
         print_error(f"An error occurred: {e}")
         return False
 
@@ -408,7 +403,6 @@ def show_config_info(json_output: bool = False) -> None:
             print(f"  {ConfigManager.CONFIG_FILE}")
 
     except Exception as e:
-        logger.error(f"Error showing config info: {e}")
         print_error(f"Error loading configuration: {e}")
 
 
@@ -451,7 +445,6 @@ def main() -> int:
                     print(Colors.success("Command history cleared."))
                 return 0
             except Exception as e:
-                logger.error(f"Error clearing history: {e}")
                 print_error(f"Failed to clear history: {e}")
                 return 1
 
@@ -522,7 +515,6 @@ def main() -> int:
         print("\n" + Colors.warning("Operation cancelled by user."))
         return 0
     except Exception as e:
-        logger.error(f"Unhandled exception: {e}", exc_info=True)
         print_error(f"An error occurred: {e}")
         return 1
 
