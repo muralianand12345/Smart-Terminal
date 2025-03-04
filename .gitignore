@@ -5,3 +5,4 @@ backup
 poetry.lock
 **/__pycache__/
 **.egg-info
+dist
