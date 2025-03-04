@@ -3,3 +3,5 @@ docker-compose.yml
 Dockerfile.notebook
 backup
 poetry.lock
+**/__pycache__/
+**.egg-info

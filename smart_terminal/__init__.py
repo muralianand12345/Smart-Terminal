@@ -17,7 +17,7 @@ Features:
 Author: Murali Anand (https://github.com/muralianand12345)
 """
 
-__version__ = "1.0.1"
+__version__ = "1.1.1"
 
 from smart_terminal.terminal import SmartTerminal
 from smart_terminal.config import ConfigManager

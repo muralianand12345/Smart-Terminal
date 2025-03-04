@@ -156,7 +156,31 @@ def main() -> int:
             return 0
         else:
             # No command provided, show help
-            parse_arguments()._parser.print_help()
+            parser = argparse.ArgumentParser(
+                description="SmartTerminal - Natural language to terminal commands"
+            )
+            parser.add_argument(
+                "command", nargs="?", help="Natural language command to execute"
+            )
+            parser.add_argument(
+                "--setup", action="store_true", help="Setup SmartTerminal configuration"
+            )
+            parser.add_argument(
+                "--clear-history", action="store_true", help="Clear command history"
+            )
+            parser.add_argument(
+                "--interactive",
+                "-i",
+                action="store_true",
+                help="Run in interactive mode",
+            )
+            parser.add_argument(
+                "--debug", action="store_true", help="Enable debug logging"
+            )
+            parser.add_argument(
+                "--version", "-v", action="store_true", help="Show version information"
+            )
+            parser.print_help()
             return 0
 
     except KeyboardInterrupt:
