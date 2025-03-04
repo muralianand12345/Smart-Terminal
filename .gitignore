@@ -1,3 +1,5 @@
 notebooks
 docker-compose.yml
 Dockerfile.notebook
+backup
+poetry.lock
