@@ -2,6 +2,7 @@
 
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-2.0.0-orange)
 
 Smart Terminal (`st`) is a powerful command-line interface that converts natural language instructions into executable terminal commands using AI. Say goodbye to forgetting command syntax or searching through documentation - just describe what you want to do in plain English.
 
@@ -9,11 +10,14 @@ Smart Terminal (`st`) is a powerful command-line interface that converts natural
 
 - **Natural Language Processing**: Convert plain English to terminal commands
 - **Multi-step Tasks**: Handle complex operations with sequential commands
-- **Cross-platform Support**: Works across macOS, Linux, and Windows
+- **Multiple AI Providers**: Support for OpenAI, Groq, and Anthropic
+- **Cross-platform Support**: Works across macOS, Linux, and Windows with dedicated shell adapters
 - **Interactive Mode**: Continuous command generation for complex workflows
 - **Command History**: Context-aware interactions for better suggestions
 - **Admin Privilege Handling**: Proper sudo/admin permission management
 - **Customizable**: Configure AI providers and other settings
+- **Dry Run Mode**: Preview commands without execution
+- **JSON Output**: Format results as JSON for scripting and automation
 
 ## ⚡ Quick Installation
 
@@ -47,6 +51,22 @@ st --setup
 
 Configure API keys, default settings, and other options.
 
+### Dry Run Mode
+
+```bash
+st --dry-run "create a file with the current date as filename"
+```
+
+Preview commands that would be executed without actually running them.
+
+### JSON Output
+
+```bash
+st --json "find all python files in the current directory"
+```
+
+Output results in JSON format for scripting and automation.
+
 ### Other Commands
 
 ```bash
@@ -58,6 +78,12 @@ st --debug
 
 # View version information
 st --version
+
+# Set up shell integration
+st --shell-setup
+
+# Show configuration information
+st --config-info
 ```
 
 ## 📋 Examples
@@ -94,8 +120,20 @@ Key configuration options:
 - **API Key**: Your AI service API key
 - **Base URL**: API endpoint URL
 - **Model Name**: AI model to use for command generation
+- **Provider**: AI provider to use (openai, groq, anthropic)
 - **Default OS**: Target operating system for commands
 - **History Limit**: Number of previous commands to retain
+- **Shell Integration**: Enable/disable shell integration for environment-changing commands
+
+## Shell Integration
+
+Smart Terminal can modify your shell environment (changing directories, setting environment variables) when you enable shell integration:
+
+```bash
+st --shell-setup
+```
+
+This adds a function to your shell configuration file that allows Smart Terminal to affect your shell environment.
 
 ## 🛠️ Development
 
@@ -118,6 +156,12 @@ poetry install
 poetry shell
 ```
 
+### Running tests
+
+```bash
+pytest
+```
+
 ### Building from source
 
 ```bash
@@ -130,7 +174,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgements
 
-- OpenAI/Groq for providing the AI capabilities
+- OpenAI, Groq, and Anthropic for providing the AI capabilities
 - All contributors and testers
 
 ## 🤝 Contributing
