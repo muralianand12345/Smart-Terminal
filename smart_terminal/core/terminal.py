@@ -191,15 +191,22 @@ class SmartTerminal(TerminalInterface):
 
             # Check for shell-affecting commands
             environment_changing_commands = ["cd ", "export ", "="]
-            has_environment_changing_commands = any(
-                cmd.get("command", "").strip().startswith(prefix)
-                for cmd in commands
-                for prefix in environment_changing_commands
-            )
+            env_changing_cmds = []
 
+            # Identify environment-changing commands
+            for cmd in commands:
+                cmd_str = cmd.get("command", "").strip()
+                if any(
+                    cmd_str.startswith(prefix)
+                    for prefix in environment_changing_commands
+                ):
+                    env_changing_cmds.append(cmd_str)
+
+            has_environment_changing_commands = len(env_changing_cmds) > 0
             shell_integration_enabled = self.config.get(
                 "shell_integration_enabled", False
             )
+            auto_source_commands = self.config.get("auto_source_commands", False)
 
             # Check if shell integration is actually working
             if shell_integration_enabled:
@@ -236,20 +243,20 @@ class SmartTerminal(TerminalInterface):
             # Update command history
             self.save_to_history(user_query, commands)
 
-            # Only display reminder about shell integration if:
-            # 1. There are environment-changing commands
-            # 2. Shell integration is enabled in config but not actually working
-            # 3. There's a marker file indicating commands need to be sourced
-            if (
-                has_environment_changing_commands
-                and shell_integration_enabled
-                and not shell_integration_working
-                and self.shell_integration.check_needs_sourcing()
-            ):
-                print_info(
-                    "\nTo apply environment changes to your parent shell, run: "
-                    "source ~/.smartterminal/shell_history/last_commands.sh"
+            # Handle shell integration for environment-changing commands
+            if has_environment_changing_commands and shell_integration_enabled:
+                # Create the shell integration command file
+                description = f"Commands from: {user_query}"
+                self.shell_integration.write_shell_commands(
+                    env_changing_cmds, description
                 )
+
+                # Inform user about shell integration
+                if not shell_integration_working or not auto_source_commands:
+                    print_info(
+                        "\nTo apply environment changes to your parent shell, run: "
+                        "source ~/.smartterminal/shell_history/last_commands.sh"
+                    )
 
             return success
 
