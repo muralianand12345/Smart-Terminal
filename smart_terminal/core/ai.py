@@ -45,6 +45,7 @@ class AIClient(AIProvider):
         base_url: Optional[str] = None,
         model_name: Optional[str] = None,
         temperature: float = 0.0,
+        cache_config: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize AI client with API credentials and settings.
@@ -54,6 +55,7 @@ class AIClient(AIProvider):
             base_url: Base URL for API calls
             model_name: AI model name to use
             temperature: Temperature parameter for generation
+            cache_config: Optional configuration for command caching
 
         Raises:
             AIError: If the client initialization fails
@@ -62,6 +64,19 @@ class AIClient(AIProvider):
         self.base_url = base_url or "https://api.groq.com/openai/v1"
         self.model_name = model_name or "llama-3.3-70b-versatile"
         self.temperature = temperature
+
+        # Initialize cache if configuration is provided
+        self.cache_manager = None
+        if cache_config is not None:
+            try:
+                from smart_terminal.cache.manager import CacheManager
+
+                self.cache_manager = CacheManager(cache_config)
+                logger.debug("Command cache initialized")
+            except ImportError:
+                logger.debug("Cache module not available")
+            except Exception as e:
+                logger.warning(f"Failed to initialize cache: {e}")
 
         # Try to initialize AI adapter
         try:
@@ -202,6 +217,7 @@ Important rules:
         prompt: str,
         context: Dict[str, Any] = None,
         system_prompt: Optional[str] = None,
+        bypass_cache: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Generate commands from a natural language prompt.
@@ -210,6 +226,7 @@ Important rules:
             prompt: Natural language prompt from the user
             context: Optional context information to enhance generation
             system_prompt: Optional system prompt to override default
+            bypass_cache: Whether to bypass the cache and force a new generation
 
         Returns:
             List of command dictionaries
@@ -220,6 +237,13 @@ Important rules:
         # Initialize context if None to avoid NoneType errors
         if context is None:
             context = {}
+
+        # Check cache first if available and not bypassed
+        if self.cache_manager is not None and not bypass_cache:
+            cached_commands = self.cache_manager.get_from_cache(prompt, context)
+            if cached_commands:
+                logger.debug("Using cached commands")
+                return cached_commands
 
         if self._using_adapter:
             try:
@@ -357,6 +381,11 @@ Important rules:
                         commands.append(args)
                     except Exception as e:
                         logger.error(f"Error parsing command: {e}")
+
+                # Add to cache if available
+                if self.cache_manager is not None and commands:
+                    self.cache_manager.add_to_cache(prompt, commands, context)
+                    logger.debug("Added commands to cache")
 
                 return commands
 

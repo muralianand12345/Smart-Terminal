@@ -77,6 +77,36 @@ class ShellSettings(BaseModel):
     )
 
 
+class CacheSettings(BaseModel):
+    """Settings for command caching functionality."""
+
+    cache_enabled: bool = Field(
+        default=True, description="Whether command caching is enabled"
+    )
+
+    cache_max_entries: int = Field(
+        default=1000,
+        ge=10,
+        le=10000,
+        description="Maximum number of entries to store in cache",
+    )
+
+    cache_max_age_days: int = Field(
+        default=30, ge=1, le=365, description="Maximum age of cache entries in days"
+    )
+
+    cache_min_similarity: float = Field(
+        default=0.85,
+        ge=0.5,
+        le=0.99,
+        description="Minimum similarity score for fuzzy matching",
+    )
+
+    cache_fuzzy_matching: bool = Field(
+        default=True, description="Whether to enable fuzzy matching for queries"
+    )
+
+
 class Config(BaseModel):
     """
     Main configuration model for SmartTerminal.
@@ -107,6 +137,10 @@ class Config(BaseModel):
 
     shell: ShellSettings = Field(
         default_factory=ShellSettings, description="Shell integration settings"
+    )
+
+    cache: CacheSettings = Field(
+        default_factory=CacheSettings, description="Command caching settings"
     )
 
     # Custom settings

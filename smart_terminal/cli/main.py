@@ -13,7 +13,6 @@ from typing import Dict, Any
 
 from smart_terminal import __version__
 from smart_terminal.utils.colors import Colors
-from smart_terminal.config import ConfigManager
 from smart_terminal.utils.logging import setup_logging
 from smart_terminal.cli.interactive import run_interactive_mode
 from smart_terminal.utils.helpers import print_error, print_banner
@@ -247,6 +246,8 @@ async def run_single_command(
     config: Dict[str, Any],
     dry_run: bool = False,
     json_output: bool = False,
+    bypass_cache: bool = False,
+    clear_cache: bool = False,
 ) -> bool:
     """
     Run a single command through SmartTerminal.
@@ -256,6 +257,8 @@ async def run_single_command(
         config: Configuration dictionary
         dry_run: Whether to only show commands without executing them
         json_output: Whether to output results in JSON format
+        bypass_cache: Whether to bypass cache and force new generation
+        clear_cache: Whether to clear cache before execution
 
     Returns:
         bool: True if command was executed successfully, False otherwise
@@ -291,12 +294,23 @@ async def run_single_command(
             else:
                 print(Colors.warning("JSON output not supported in this version."))
 
+        # Handle cache-related options
+        if (
+            clear_cache
+            and hasattr(terminal, "ai_client")
+            and hasattr(terminal.ai_client, "cache_manager")
+            and terminal.ai_client.cache_manager
+        ):
+            terminal.ai_client.cache_manager.clear_cache()
+            if not json_output:
+                print(Colors.info("Command cache cleared."))
+
         # Execute the command
         if hasattr(terminal, "run_command"):
             await terminal.run_command(command)
         else:
             # Legacy method
-            await terminal.process_input(command)
+            await terminal.process_input(command, bypass_cache=bypass_cache)
 
         return True
 
@@ -337,73 +351,74 @@ def show_version_info(json_output: bool = False) -> None:
         print(f"Python {platform.python_version()} on {platform.platform()}")
 
 
-def show_config_info(json_output: bool = False) -> None:
+def show_cache_info(json_output: bool = False) -> None:
     """
-    Display configuration information.
+    Display command cache information.
 
     Args:
         json_output: Whether to output in JSON format
     """
     try:
-        # Load config
-        config = ConfigManager.load_config()
+        # Try to import cache manager
+        try:
+            from smart_terminal.cache.manager import CacheManager
+            from smart_terminal.config import ConfigManager
 
-        if json_output:
-            # Redact API key for security
-            if "api_key" in config and config["api_key"]:
-                key = config["api_key"]
-                if len(key) > 10:
-                    config["api_key"] = f"{key[:4]}...{key[-4:]}"
+            # Load config to get cache settings
+            config = ConfigManager.load_config()
+            cache_config = {k: v for k, v in config.items() if k.startswith("cache_")}
+
+            # Create cache manager
+            cache_manager = CacheManager(cache_config)
+
+            # Get statistics
+            stats = cache_manager.get_statistics()
+
+            if json_output:
+                print(json.dumps(stats, indent=2))
+            else:
+                print(Colors.highlight("Command Cache Statistics"))
+                print(Colors.highlight("======================="))
+
+                print(f"{Colors.info('Enabled:')} {Colors.cmd(str(stats['enabled']))}")
+                print(f"{Colors.info('Entries:')} {Colors.cmd(str(stats['entries']))}")
+                print(
+                    f"{Colors.info('Maximum entries:')} {Colors.cmd(str(stats['max_entries']))}"
+                )
+                print(
+                    f"{Colors.info('Maximum age (days):')} {Colors.cmd(str(stats['max_age_days']))}"
+                )
+
+                # Convert bytes to human-readable format
+                size_bytes = stats["size_bytes"]
+                if size_bytes < 1024:
+                    size_str = f"{size_bytes} bytes"
+                elif size_bytes < 1024 * 1024:
+                    size_str = f"{size_bytes / 1024:.2f} KB"
                 else:
-                    config["api_key"] = "********"
+                    size_str = f"{size_bytes / (1024 * 1024):.2f} MB"
 
-            print(json.dumps(config, indent=2))
-        else:
-            print(Colors.highlight("Configuration Information"))
-            print(Colors.highlight("========================="))
+                print(f"{Colors.info('Cache file size:')} {Colors.cmd(size_str)}")
+                print(
+                    f"{Colors.info('Hit rate:')} {Colors.cmd(f'{stats["hit_rate"] * 100:.2f}%')}"
+                )
 
-            # Group settings logically
-            sections = {
-                "General": ["default_os", "log_level"],
-                "AI Service": ["api_key", "base_url", "model_name", "temperature"],
-                "History": ["history_limit", "save_history"],
-                "Shell": ["shell_integration_enabled", "auto_source_commands"],
-            }
+                # Show cache file location
+                print(f"\n{Colors.info('Cache File Location:')}")
+                print(f"  {CacheManager.CACHE_FILE}")
 
-            # Function to redact sensitive values
-            def redact_value(key: str, value: Any) -> str:
-                if key == "api_key" and value:
-                    # Redact API key except first/last 4 chars if long enough
-                    if len(value) > 10:
-                        return f"{value[:4]}...{value[-4:]}"
-                    return "********"
-                return str(value)
+                # Show cache management commands
+                print(f"\n{Colors.info('Cache Management Commands:')}")
+                print(f"  {Colors.cmd('st --clear-cache')} - Clear the entire cache")
+                print(
+                    f"  {Colors.cmd('st --no-cache "your command"')} - Bypass cache for a single command"
+                )
 
-            # Print each section
-            for section, keys in sections.items():
-                print(f"\n{Colors.info(section)}:")
-                for key in keys:
-                    if key in config:
-                        value = config[key]
-                        print(f"  {Colors.cmd(key)}: {redact_value(key, value)}")
-
-            # Print custom settings
-            custom_keys = [
-                k
-                for k in config
-                if all(k not in section_keys for section_keys in sections.values())
-            ]
-            if custom_keys:
-                print(f"\n{Colors.info('Custom Settings')}:")
-                for key in custom_keys:
-                    print(f"  {Colors.cmd(key)}: {redact_value(key, config[key])}")
-
-            # Show config file location
-            print(f"\n{Colors.info('Config File Location')}:")
-            print(f"  {ConfigManager.CONFIG_FILE}")
+        except ImportError:
+            print_error("Cache manager module not available")
 
     except Exception as e:
-        print_error(f"Error loading configuration: {e}")
+        print_error(f"Error retrieving cache information: {e}")
 
 
 def main() -> int:
@@ -425,6 +440,11 @@ def main() -> int:
         # Show config info and exit
         if args.config_info:
             show_config_info(args.json)
+            return 0
+
+        # Show cache info and exit
+        if args.cache_info:
+            show_cache_info(args.json)
             return 0
 
         # Initialize basic logging
@@ -498,18 +518,40 @@ def main() -> int:
             asyncio.run(run_interactive_mode(terminal, config, args.quiet))
             return 0
 
+        # Clear cache if requested
+        if args.clear_cache:
+            try:
+                # Import cache manager directly
+                try:
+                    from smart_terminal.cache.manager import CacheManager
+
+                    cache_manager = CacheManager(config)
+                    cache_manager.clear_cache()
+                    if not args.quiet:
+                        print(Colors.success("Command cache cleared."))
+                except ImportError:
+                    print_error("Cache manager not available. Unable to clear cache.")
+                    return 1
+
+                if args.command is None:  # If only clearing cache, return success
+                    return 0
+            except Exception as e:
+                print_error(f"Failed to clear cache: {e}")
+                return 1
+
         # Process a single command
         if args.command:
             success = asyncio.run(
                 run_single_command(
-                    args.command, config, dry_run=args.dry_run, json_output=args.json
+                    args.command,
+                    config,
+                    dry_run=args.dry_run,
+                    json_output=args.json,
+                    bypass_cache=args.no_cache,
+                    clear_cache=args.clear_cache,
                 )
             )
             return 0 if success else 1
-        else:
-            # No command provided, show help
-            print(get_help_text())
-            return 0
 
     except KeyboardInterrupt:
         print("\n" + Colors.warning("Operation cancelled by user."))

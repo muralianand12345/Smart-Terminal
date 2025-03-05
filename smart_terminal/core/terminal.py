@@ -103,12 +103,22 @@ class SmartTerminal(TerminalInterface):
                 self.shell_adapter = None
                 logger.debug("Shell adapters not available")
 
+            # Extract cache configuration
+            cache_config = {
+                "cache_enabled": config.get("cache_enabled", True),
+                "cache_max_entries": config.get("cache_max_entries", 1000),
+                "cache_max_age_days": config.get("cache_max_age_days", 30),
+                "cache_min_similarity": config.get("cache_min_similarity", 0.85),
+                "cache_fuzzy_matching": config.get("cache_fuzzy_matching", True),
+            }
+
             # Initialize AI client
             self.ai_client = AIClient(
                 api_key=config.get("api_key", ""),
                 base_url=config.get("base_url", "https://api.groq.com/openai/v1"),
                 model_name=config.get("model_name", "llama-3.3-70b-versatile"),
                 temperature=config.get("temperature", 0.0),
+                cache_config=cache_config,
             )
 
             # Initialize command generator
@@ -147,12 +157,15 @@ class SmartTerminal(TerminalInterface):
         """
         self.json_output = enabled
 
-    async def process_input(self, user_query: str) -> Union[bool, Dict[str, Any]]:
+    async def process_input(
+        self, user_query: str, bypass_cache: bool = False
+    ) -> Union[bool, Dict[str, Any]]:
         """
         Process user input, generate and execute commands.
 
         Args:
             user_query: Natural language query from user
+            bypass_cache: Whether to bypass the cache and force a new command generation
 
         Returns:
             Result of processing (success status or result data)
@@ -176,7 +189,7 @@ class SmartTerminal(TerminalInterface):
         try:
             # Get commands using the enhanced query
             commands = await self.command_generator.generate_commands(
-                enhanced_query, context=context
+                enhanced_query, context=context, bypass_cache=bypass_cache
             )
 
             # No commands returned
@@ -267,12 +280,15 @@ class SmartTerminal(TerminalInterface):
             print_error(f"An unexpected error occurred: {e}")
             return False
 
-    async def run_command(self, command: str) -> Union[bool, Dict[str, Any]]:
+    async def run_command(
+        self, command: str, bypass_cache: bool = False
+    ) -> Union[bool, Dict[str, Any]]:
         """
         Run a single command through SmartTerminal.
 
         Args:
             command: Natural language command to process
+            bypass_cache: Whether to bypass cache and force new generation
 
         Returns:
             Result of command execution
@@ -281,7 +297,7 @@ class SmartTerminal(TerminalInterface):
         chat_history = ConfigManager.load_history()
 
         # Process the command
-        result = await self.process_input(command)
+        result = await self.process_input(command, bypass_cache=bypass_cache)
 
         return result
 

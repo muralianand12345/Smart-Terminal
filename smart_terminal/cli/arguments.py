@@ -83,6 +83,9 @@ Examples:
     info_group.add_argument(
         "--config-info", action="store_true", help="Show configuration information"
     )
+    info_group.add_argument(
+        "--cache-info", action="store_true", help="Show command cache statistics"
+    )
 
     # Advanced options
     advanced_group = parser.add_argument_group("Advanced Options")
@@ -95,6 +98,16 @@ Examples:
         "--os",
         choices=["macos", "linux", "windows"],
         help="Target operating system for commands",
+    )
+    advanced_group.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Bypass command cache and force new generation",
+    )
+    advanced_group.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear the command cache before execution",
     )
 
     parsed_args = parser.parse_args(args)

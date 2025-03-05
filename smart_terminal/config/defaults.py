@@ -29,6 +29,12 @@ DEFAULT_CONFIG = {
     # Shell settings
     "shell_integration_enabled": False,
     "auto_source_commands": False,
+    # Cache settings
+    "cache_enabled": True,
+    "cache_max_entries": 1000,
+    "cache_max_age_days": 30,
+    "cache_min_similarity": 0.85,
+    "cache_fuzzy_matching": True,
 }
 
 
