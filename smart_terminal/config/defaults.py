@@ -92,6 +92,11 @@ def reset_to_defaults(config: Dict[str, Any]) -> Dict[str, Any]:
     for key in defaults:
         config[key] = defaults[key]
 
+    # Remove keys that are not in defaults
+    keys_to_remove = [key for key in config if key not in defaults]
+    for key in keys_to_remove:
+        del config[key]
+
     return config
 
 

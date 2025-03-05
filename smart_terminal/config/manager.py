@@ -168,6 +168,9 @@ class ConfigManager:
             List[Dict[str, Any]]: Chat history as a list of message objects.
         """
         try:
+            # Make sure config directory exists
+            cls.CONFIG_DIR.mkdir(exist_ok=True)
+
             # Check if history file exists
             if not cls.HISTORY_FILE.exists():
                 return []

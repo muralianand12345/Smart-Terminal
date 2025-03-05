@@ -78,7 +78,7 @@ def setup_logging(
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
-    # Set level
+    # Set level - also disable propagation to avoid duplicate logs
     root_logger.setLevel(level)
 
     # Choose format string based on level
@@ -114,11 +114,6 @@ def setup_logging(
             third_party_logger.setLevel(logging.WARNING)
             third_party_logger.addHandler(NullHandler())
 
-    # Log setup information
-    logging.debug(f"Logging initialized with level {level_name}")
-    if log_file:
-        logging.debug(f"Logging to file: {log_file_path}")
-
 
 def disable_all_logging() -> None:
     """
@@ -127,7 +122,15 @@ def disable_all_logging() -> None:
     This is useful for unit tests or when logging needs to be
     temporarily disabled.
     """
+    # Set root logger to a level higher than CRITICAL to disable all logging
     root_logger = logging.getLogger()
+
+    # Important: Set all existing loggers to CRITICAL+1 too
+    for name in list(logging.root.manager.loggerDict.keys()):
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.CRITICAL + 1)
+
+    # Also set root logger level
     root_logger.setLevel(logging.CRITICAL + 1)
 
     # Remove all handlers
@@ -145,7 +148,27 @@ def enable_debug_logging() -> None:
     This is useful for debugging issues where you need to see
     all logging output.
     """
-    setup_logging(level_name="DEBUG", log_file=True, format_string=VERBOSE_FORMAT)
+    # Set up the root logger
+    setup_logging(
+        level_name="DEBUG",
+        log_file=True,
+        log_to_console=True,
+        format_string=VERBOSE_FORMAT,
+    )
+
+    # Create a console handler with the verbose format
+    formatter = logging.Formatter(VERBOSE_FORMAT)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+
+    # Also enable DEBUG for all existing loggers and ensure they have a handler
+    for name in list(logging.root.manager.loggerDict.keys()):
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.DEBUG)
+
+        # Add a stream handler if it doesn't already have one
+        if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+            logger.addHandler(console_handler)
 
     logging.debug("Debug logging enabled")
 
