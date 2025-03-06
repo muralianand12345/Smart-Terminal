@@ -15,6 +15,7 @@ from smart_terminal.utils.helpers import (
     print_info,
     print_banner,
     safe_execute,
+    deprecated,
 )
 
 __all__ = [
@@ -31,4 +32,5 @@ __all__ = [
     "print_info",
     "print_banner",
     "safe_execute",
+    "deprecated",
 ]

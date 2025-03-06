@@ -8,13 +8,29 @@ throughout the application but don't fit into more specific categories.
 import os
 import sys
 import json
+import inspect
+import warnings
 import platform
+import functools
 import subprocess
-from typing import Any, Dict, List, Optional, Tuple, Callable, TypeVar, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Callable,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 from smart_terminal.utils.colors import Colors
 
 # Define type variables for generic functions
+F = TypeVar("F", bound=Callable[..., Any])
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -343,3 +359,108 @@ def clear_screen() -> None:
         os.system("cls")
     else:
         os.system("clear")
+
+
+@overload
+def deprecated(func: F) -> F: ...
+
+
+@overload
+def deprecated(
+    func: None = None,
+    message: Optional[str] = None,
+    version: Optional[str] = None,
+    alternative: Optional[str] = None,
+    category: Type[Warning] = DeprecationWarning,
+    stacklevel: int = 2,
+) -> Callable[[F], F]: ...
+
+
+def deprecated(
+    func: Optional[Callable] = None,
+    message: Optional[str] = None,
+    version: Optional[str] = None,
+    alternative: Optional[str] = None,
+    category: type[Warning] = DeprecationWarning,
+    stacklevel: int = 2,
+) -> Any:
+    """
+    Decorator to mark functions, methods, or classes as deprecated.
+
+    Args:
+        func: The function, method, or class being decorated
+        message: Optional custom deprecation message
+        version: Optional version when the decorated object will be removed
+        alternative: Optional name of alternative function/method/class to use
+        category: Warning category to use, defaults to DeprecationWarning
+        stacklevel: Controls warning stacktrace depth
+
+    Returns:
+        Decorated function, method, or class that issues a deprecation warning when used
+
+    Examples:
+        Basic usage:
+        >>> @deprecated
+        ... def old_function():
+        ...     pass
+
+        With custom message:
+        >>> @deprecated(message="Use another function")
+        ... def old_function():
+        ...     pass
+
+        With version and alternative:
+        >>> @deprecated(version="2.0.0", alternative="new_function")
+        ... def old_function():
+        ...     pass
+    """
+
+    def decorator(func_or_class: F) -> F:
+        # Get object name and type
+        is_class = inspect.isclass(func_or_class)
+        obj_name = func_or_class.__qualname__
+        obj_type = "class" if is_class else "function"
+
+        # Build the deprecation message
+        msg_parts = []
+
+        if message:
+            msg_parts.append(message)
+        else:
+            msg_parts.append(f"{obj_type.capitalize()} {obj_name} is deprecated.")
+
+        if version:
+            msg_parts.append(f"It will be removed in version {version}.")
+
+        if alternative:
+            msg_parts.append(f"Use {alternative} instead.")
+
+        complete_message = " ".join(msg_parts)
+
+        # Class decorator
+        if is_class:
+            original_init = func_or_class.__init__
+
+            @functools.wraps(original_init)
+            def wrapped_init(self, *args, **kwargs):
+                warnings.warn(
+                    complete_message, category=category, stacklevel=stacklevel
+                )
+                return original_init(self, *args, **kwargs)
+
+            func_or_class.__init__ = wrapped_init
+            return cast(F, func_or_class)
+
+        # Function/method decorator
+        @functools.wraps(func_or_class)
+        def wrapper(*args, **kwargs):
+            warnings.warn(complete_message, category=category, stacklevel=stacklevel)
+            return func_or_class(*args, **kwargs)
+
+        return cast(F, wrapper)
+
+    # Handle both @deprecated and @deprecated() syntax
+    if func is None:
+        return decorator
+
+    return decorator(func)
